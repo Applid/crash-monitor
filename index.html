@@ -2,83 +2,210 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TERMINAL - MARKET SURVEILLANCE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <title>TERMINAL - MARKET VITALS</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #030303; color: #a0aab5; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 0; }
-        .panel { background-color: #0a0a0a; border: 1px solid #1f1f1f; }
-        .critical-text { color: #ff2a2a; text-shadow: 0 0 10px rgba(255,42,42,0.3); }
-        .safe-text { color: #cfcfcf; }
+        :root {
+            --bg-color: #000000;
+            --panel-bg: #050505;
+            --border-color: #1a1a1a;
+            --text-main: #e0e0e0;
+            --text-muted: #666666;
+            --accent-danger: #ff2a2a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'JetBrains Mono', 'Noto Sans JP', monospace; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* ヘッダー */
+        header {
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: var(--bg-color);
+            z-index: 10;
+        }
+        .title { font-size: 1.2rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; }
+        .subtitle { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; letter-spacing: 0.1em; }
+        
+        /* ティッカーテープ */
+        .ticker-wrapper { border-bottom: 1px solid var(--border-color); height: 46px; }
+
+        /* メイングリッド */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: 2fr 1fr;
+            gap: 1px;
+            background-color: var(--border-color);
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .panel { background-color: var(--panel-bg); position: relative; overflow: hidden; }
+        
+        /* 各パネルの配置 */
+        .main-chart { grid-column: 1 / 2; grid-row: 1 / 2; }
+        .market-overview { grid-column: 2 / 3; grid-row: 1 / 3; }
+        .technical-analysis { grid-column: 1 / 2; grid-row: 2 / 3; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background-color: var(--border-color); }
+        .ta-widget { background-color: var(--panel-bg); }
     </style>
 </head>
-<body class="p-6 md:p-12">
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[#1f1f1f] pb-6 mb-10">
+<body>
+
+    <header>
         <div>
-            <h1 class="text-xl tracking-[0.2em] text-[#e0e0e0] uppercase font-light">Market Vital Surveillance</h1>
-            <p class="text-[10px] text-[#555] mt-2 uppercase">Real-time JSON Stream / Active</p>
+            <div class="title">Market Vitals Terminal</div>
+            <div class="subtitle">Continuous Systemic Risk Surveillance</div>
         </div>
-        <div class="mt-4 md:mt-0 text-left md:text-right">
-            <p class="text-[10px] text-[#555] uppercase tracking-wider">Estimated Crash Window</p>
-            <p class="critical-text text-base mt-1">MAR 12 - MAR 15, 2026</p>
+        <div style="text-align: right;">
+            <div class="subtitle">SYSTEM STATUS</div>
+            <div style="color: var(--accent-danger); font-size: 0.9rem; margin-top: 0.3rem;">ACTIVE MONITORING</div>
         </div>
     </header>
 
-    <div class="panel p-8 md:p-12 mb-10 border-l-2 border-[#ff2a2a]">
-        <p class="text-[10px] text-[#555] uppercase tracking-widest mb-4">Systemic Fragility Index</p>
-        <div id="risk-score" class="text-6xl md:text-8xl font-light critical-text">--.-%</div>
+    <div class="ticker-wrapper">
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+            {
+            "symbols": [
+                { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500" },
+                { "proName": "CBOE:VIX", "title": "VIX" },
+                { "description": "WTI Crude", "proName": "NYMEX:CL1!" },
+                { "description": "Gold", "proName": "COMEX:GC1!" },
+                { "description": "US 10Y", "proName": "TVC:US10Y" }
+            ],
+            "showSymbolLogo": false,
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "displayMode": "adaptive",
+            "locale": "ja"
+            }
+            </script>
+        </div>
     </div>
 
-    <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-
-    <script>
-        // ▼ ここをあなたのCSV URLに書き換えてください ▼
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTT0RojfNIg7FG42Fpwkr0uptIJfLXXH-oMC14Zd4v0b-e6AUoHg5CZDCo6_L70tNnuM4d_rBx11rII/pub?gid=0&single=true&output=csv';
-        // ▲ ここまで ▲
-
-        async function fetchData() {
-            try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
-                const rows = text.split('\n').slice(1);
-                
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '';
-                let totalRisk = 0;
-
-                rows.forEach(row => {
-                    const columns = row.split(',');
-                    if (columns.length < 6) return;
-                    
-                    const [name, value, change, status, threshold, score] = columns;
-                    totalRisk += parseFloat(score) || 0;
-                    const isCritical = status.trim() === 'CRITICAL';
-
-                    grid.innerHTML += `
-                        <div class="panel p-6 flex flex-col justify-between h-40">
-                            <div class="flex justify-between items-start">
-                                <span class="text-[10px] text-[#666] uppercase tracking-wider">${name}</span>
-                                <span class="text-[9px] px-1.5 py-0.5 border ${isCritical ? 'border-[#4a0000] text-[#ff2a2a]' : 'border-[#222] text-[#666]'}">${status}</span>
-                            </div>
-                            <div class="text-3xl font-light mt-4 ${isCritical ? 'critical-text' : 'safe-text'}">
-                                ${parseFloat(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </div>
-                            <div class="text-[10px] mt-3 ${change.includes('-') ? 'text-[#ff4444]' : 'text-[#44ff44]'}">
-                                ${change} <span class="text-[#444] ml-2">TH: ${threshold}</span>
-                            </div>
-                        </div>
-                    `;
+    <div class="dashboard-grid">
+        <div class="panel main-chart">
+            <div class="tradingview-widget-container">
+                <div id="tradingview_chart" style="height:100%; width:100%;"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                <script type="text/javascript">
+                new TradingView.widget({
+                "autosize": true,
+                "symbol": "CME_MINI:ES1!",
+                "interval": "D",
+                "timezone": "Asia/Tokyo",
+                "theme": "dark",
+                "style": "1",
+                "locale": "ja",
+                "enable_publishing": false,
+                "backgroundColor": "#050505",
+                "gridColor": "#1a1a1a",
+                "hide_top_toolbar": false,
+                "hide_legend": false,
+                "save_image": false,
+                "container_id": "tradingview_chart"
                 });
+                </script>
+            </div>
+        </div>
 
-                const riskPercentage = Math.min((totalRisk / rows.length) * 100, 100).toFixed(1);
-                document.getElementById('risk-score').innerText = riskPercentage + '%';
-            } catch (error) {
-                console.error("Data synchronization failed.", error);
-            }
-        }
+        <div class="panel market-overview">
+            <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px); width:100%;"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+                {
+                "width": "100%",
+                "height": "100%",
+                "symbolsGroups": [
+                    {
+                    "name": "リスク・コモディティ指標",
+                    "originalName": "Indices",
+                    "symbols": [
+                        { "name": "CBOE:VIX", "displayName": "VIX (恐怖指数)" },
+                        { "name": "NYMEX:CL1!", "displayName": "WTI 原油" },
+                        { "name": "COMEX:GC1!", "displayName": "金 (Gold)" },
+                        { "name": "TVC:US10Y", "displayName": "米国10年債利回り" },
+                        { "name": "TVC:DXY", "displayName": "ドルインデックス" }
+                    ]
+                    }
+                ],
+                "showSymbolLogo": false,
+                "colorTheme": "dark",
+                "isTransparent": true,
+                "locale": "ja",
+                "backgroundColor": "#050505"
+                }
+                </script>
+            </div>
+        </div>
 
-        setInterval(fetchData, 60000);
-        fetchData();
-    </script>
+        <div class="panel technical-analysis">
+            <div class="ta-widget">
+                <div class="tradingview-widget-container">
+                    <div class="tradingview-widget-container__widget" style="height:100%; width:100%;"></div>
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+                    {
+                    "interval": "1D",
+                    "width": "100%",
+                    "isTransparent": true,
+                    "height": "100%",
+                    "symbol": "FOREXCOM:SPXUSD",
+                    "showIntervalTabs": true,
+                    "displayMode": "single",
+                    "locale": "ja",
+                    "colorTheme": "dark"
+                    }
+                    </script>
+                </div>
+            </div>
+            <div class="ta-widget">
+                <div class="tradingview-widget-container">
+                    <div class="tradingview-widget-container__widget" style="height:100%; width:100%;"></div>
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+                    {
+                    "interval": "1D",
+                    "width": "100%",
+                    "isTransparent": true,
+                    "height": "100%",
+                    "symbol": "CBOE:VIX",
+                    "showIntervalTabs": true,
+                    "displayMode": "single",
+                    "locale": "ja",
+                    "colorTheme": "dark"
+                    }
+                    </script>
+                </div>
+            </div>
+            <div class="ta-widget">
+                <div class="tradingview-widget-container">
+                    <div class="tradingview-widget-container__widget" style="height:100%; width:100%;"></div>
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+                    {
+                    "interval": "1D",
+                    "width": "100%",
+                    "isTransparent": true,
+                    "height": "100%",
+                    "symbol": "NYMEX:CL1!",
+                    "showIntervalTabs": true,
+                    "displayMode": "single",
+                    "locale": "ja",
+                    "colorTheme": "dark"
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
