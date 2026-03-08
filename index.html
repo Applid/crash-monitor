@@ -3,400 +3,393 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Vitals - Pro Terminal</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Systemic Vitals Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-    /* === Apple HIG Dark Mode Aesthetics === */
+    /* === Apple HIG Dark Mode & Glassmorphism === */
     :root {
         --bg-color: #000000;
-        --card-bg: #1C1C1E; /* Apple System Gray 6 */
-        --card-hover: #2C2C2E; /* Apple System Gray 5 */
-        --text-primary: #FFFFFF;
-        --text-secondary: #8E8E93; /* Apple System Gray */
+        --card-bg: rgba(28, 28, 30, 0.5); /* Apple System Gray 6 with opacity */
+        --card-border: rgba(255, 255, 255, 0.08);
+        --text-primary: #F5F5F7;
+        --text-secondary: #8E8E93;
         --system-red: #FF453A;
         --system-orange: #FF9F0A;
         --system-yellow: #FFD60A;
         --system-green: #32D74B;
         --system-blue: #0A84FF;
-        --border-color: rgba(255, 255, 255, 0.1);
-        --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+        --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Hiragino Sans", sans-serif;
         --font-mono: 'JetBrains Mono', monospace;
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
         background-color: var(--bg-color);
+        background-image: radial-gradient(ellipse at top left, #121214, #000000);
         color: var(--text-primary);
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
-        padding: 2.5rem;
-        line-height: 1.5;
+        min-height: 100vh;
+        padding: 2rem;
     }
 
-    .container { max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    /* 医療機器のような微細なスキャンライン（高級感の演出） */
+    body::after {
+        content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px);
+    }
 
-    /* HEADER */
-    .header { border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end; }
-    .header-left h1 { font-size: 1.8rem; font-weight: 600; letter-spacing: -0.02em; }
-    .header-left p { color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; margin-top: 4px; }
-    .header-right { text-align: right; }
-    .live-status { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--system-red); }
-    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--system-red); animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    .container { max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; position: relative; z-index: 10; }
 
-    /* DYNAMIC ALERT BAR */
-    #dynamic-alert-container {
-        background-color: rgba(255, 69, 58, 0.12);
-        border: 1px solid rgba(255, 69, 58, 0.25);
-        border-radius: 12px;
-        padding: 1.2rem 1.5rem;
-        display: none;
-        gap: 1rem;
-        align-items: flex-start;
+    /* === HEADER === */
+    .header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1rem; }
+    .header h1 { font-size: 1.7rem; font-weight: 500; letter-spacing: 0.02em; }
+    .header p { color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+    .live-status { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--system-red); }
+    .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--system-red); box-shadow: 0 0 8px var(--system-red); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+    /* === DYNAMIC SYSTEM ALERT === */
+    .alert-box {
+        background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.3); border-radius: 12px;
+        padding: 1.2rem 1.5rem; display: flex; gap: 1rem; align-items: flex-start; backdrop-filter: blur(10px);
     }
     .alert-icon { font-size: 1.2rem; }
-    .alert-content { display: flex; flex-direction: column; gap: 4px; }
-    .alert-title { color: var(--system-red); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; }
-    .alert-text { font-size: 0.85rem; color: #ffb3b0; line-height: 1.6; }
+    .alert-title { color: var(--system-red); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .alert-content { font-size: 0.85rem; color: #ffb3b0; line-height: 1.5; }
 
-    /* GRID LAYOUTS */
-    .grid-vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
-    .grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1rem; }
-    @media (max-width: 1024px) { .grid-main { grid-template-columns: 1fr; } }
-    
-    /* VITAL CARDS */
+    /* === GRID SYSTEM === */
+    .grid-vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; margin-bottom: 1rem; }
+    .grid-lower { display: grid; grid-template-columns: 2fr 1fr; gap: 1.2rem; }
+    @media (max-width: 1024px) { .grid-lower { grid-template-columns: 1fr; } }
+
+    /* === VITAL CARDS (Glassmorphism) === */
     .card {
-        background-color: var(--card-bg);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 16px;
         padding: 1.5rem;
-        border: 1px solid var(--border-color);
-        display: flex; flex-direction: column; gap: 1.2rem;
-        transition: background-color 0.2s;
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        display: flex; flex-direction: column;
+        transition: transform 0.2s, background 0.2s;
     }
-    .card:hover { background-color: var(--card-hover); }
+    .card:hover { background: rgba(44, 44, 46, 0.5); border-color: rgba(255,255,255,0.15); }
 
-    .c-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .c-title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
-    .c-ticker { font-size: 0.7rem; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 2px; }
+    .c-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .c-name { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; }
+    .c-ticker { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; }
     
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; font-family: var(--font-mono); }
-    .badge.safe { color: var(--system-green); background-color: rgba(50, 215, 75, 0.15); }
-    .badge.warn { color: var(--system-orange); background-color: rgba(255, 159, 10, 0.15); }
-    .badge.danger { color: var(--system-red); background-color: rgba(255, 69, 58, 0.15); }
+    .badge { font-family: var(--font-mono); font-size: 0.65rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.05em; }
+    .bg-safe { color: var(--system-green); background: rgba(50,215,75,0.15); }
+    .bg-warn { color: var(--system-orange); background: rgba(255,159,10,0.15); }
+    .bg-danger { color: var(--system-red); background: rgba(255,69,58,0.15); }
 
-    .c-price-row { display: flex; align-items: baseline; gap: 0.6rem; }
-    .c-price { font-family: var(--font-mono); font-size: 2.2rem; font-weight: 400; letter-spacing: -0.03em; }
+    .c-price-row { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.5rem; }
+    .c-price { font-family: var(--font-mono); font-size: 2.2rem; font-weight: 300; letter-spacing: -0.03em; line-height: 1; }
     .c-change { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; }
-    .color-green { color: var(--system-green); }
-    .color-red { color: var(--system-red); }
+    .col-green { color: var(--system-green); }
+    .col-red { color: var(--system-red); }
 
-    /* PROGRESS BARS */
-    .prog-wrap { width: 100%; display: flex; flex-direction: column; gap: 6px; }
-    .prog-track { height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-    .prog-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-    .prog-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-secondary); font-family: var(--font-mono); }
+    /* === HORIZONTAL PROGRESS BARS === */
+    .bar-container { margin: 1rem 0; }
+    .bar-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; position: relative; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+    .fill-safe { background: linear-gradient(90deg, #15803d, var(--system-green)); }
+    .fill-warn { background: linear-gradient(90deg, #c2410c, var(--system-orange)); }
+    .fill-danger { background: linear-gradient(90deg, #9f1239, var(--system-red)); box-shadow: 0 0 10px var(--system-red); }
+    .bar-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-secondary); margin-top: 6px; }
 
-    /* THRESHOLD LISTS */
-    .thresh-list { display: flex; flex-direction: column; gap: 4px; }
-    .thresh-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); padding: 6px 8px; border-radius: 6px; transition: 0.3s; border-left: 2px solid transparent; }
-    .thresh-row.active { background-color: rgba(255,255,255,0.05); color: var(--text-primary); font-weight: 500; }
-    .thresh-row.passed { opacity: 0.4; }
-    .thresh-val { font-family: var(--font-mono); width: 85px; }
-    .thresh-desc { flex-grow: 1; text-align: right; }
+    /* === THRESHOLD ANALYSIS (詳細分析) === */
+    .thresholds { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
+    .t-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); padding: 6px 8px; border-radius: 6px; transition: 0.3s; border-left: 2px solid transparent; }
+    .t-row.active { background: rgba(255,255,255,0.06); color: var(--text-primary); font-weight: 500; }
+    .t-row.passed { opacity: 0.3; }
+    .t-val { font-family: var(--font-mono); width: 85px; }
+    .t-desc { flex-grow: 1; text-align: right; }
 
-    /* BAYESIAN ENGINE */
-    .section-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 1.2rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-    .bayes-box { display: flex; gap: 2rem; align-items: center; padding: 0.5rem 0; }
-    .bayes-circle { width: 130px; height: 130px; border-radius: 50%; border: 3px solid var(--system-green); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.5s; }
-    .bayes-circle span.val { font-family: var(--font-mono); font-size: 2.2rem; font-weight: 400; }
-    .bayes-circle span.lbl { font-size: 0.65rem; color: var(--text-secondary); letter-spacing: 0.05em; }
-    .bayes-nodes { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--border-color); padding-left: 1.5rem; }
-    .bayes-node { font-size: 0.85rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; position: relative; }
-    .bayes-node::before { content: ''; position: absolute; left: -1.5rem; top: 50%; width: 1rem; height: 1px; background: var(--border-color); }
-    .bayes-node.active { color: var(--text-primary); font-weight: 500; }
-    .bayes-node.active::before { background: var(--system-red); height: 2px; }
+    /* === BAYESIAN & MATRIX SECTION === */
+    .section-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    
+    .matrix { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .matrix th { text-align: left; padding: 12px; border-bottom: 1px solid var(--card-border); color: var(--text-secondary); font-weight: 500; }
+    .matrix td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .matrix tr:last-child td { border-bottom: none; }
 
-    /* DYNAMIC TRIGGERS & NEWS */
-    .trigger-item { padding: 1.2rem; border-radius: 12px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-left: 4px solid var(--system-red); margin-bottom: 0.8rem; }
+    .bayes-container { display: flex; align-items: center; gap: 2rem; padding: 1rem 0; }
+    .prob-circle { width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--system-green); display: flex; flex-direction: column; justify-content: center; align-items: center; flex-shrink: 0; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    .prob-val { font-family: var(--font-mono); font-size: 2rem; font-weight: 300; }
+    .prob-lbl { font-size: 0.6rem; color: var(--text-secondary); letter-spacing: 0.1em; }
+    .bayes-tree { flex-grow: 1; border-left: 1px solid var(--card-border); padding-left: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
+    .b-node { font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; position: relative; }
+    .b-node::before { content: ''; position: absolute; left: -1.5rem; top: 50%; width: 1rem; height: 1px; background: var(--card-border); }
+    .b-node.active { color: var(--text-primary); font-weight: 500; }
+    .b-node.active::before { background: var(--system-red); height: 2px; }
+
+    /* === DYNAMIC TRIGGERS & NEWS === */
+    .trigger-item { padding: 1.2rem; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-left: 3px solid var(--system-red); margin-bottom: 1rem; }
     .trigger-item.warn { border-left-color: var(--system-orange); }
-    .trigger-item h4 { font-size: 0.85rem; margin-bottom: 6px; color: var(--text-primary); }
-    .trigger-item p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+    .trigger-item h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    .trigger-item p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
 
-    .news-list { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: 380px; padding-right: 8px; }
-    .news-item { border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
+    .news-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 400px; padding-right: 8px; }
+    .news-item { border-bottom: 1px solid var(--card-border); padding-bottom: 12px; }
     .news-item:last-child { border-bottom: none; }
-    .news-time { font-size: 0.7rem; color: var(--text-secondary); font-family: var(--font-mono); margin-bottom: 4px; display: block; }
-    .news-title { font-size: 0.85rem; color: var(--text-primary); text-decoration: none; line-height: 1.5; display: block; font-weight: 500; }
+    .news-time { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+    .news-title { font-size: 0.85rem; color: var(--text-primary); text-decoration: none; line-height: 1.4; display: block; transition: color 0.2s; }
     .news-title:hover { color: var(--system-blue); }
-
-    /* MATRIX */
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    th { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 500; font-size: 0.75rem; }
-    td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="header-left">
-            <h1>Systemic Vitals Monitor</h1>
-            <p>MacBook Pro Optimized / Real-time Diagnostic Terminal</p>
+        <div>
+            <h1>MARKET VITALS TERMINAL</h1>
+            <p>MacBook Pro Optimized / Real-time Diagnostic Engine</p>
         </div>
-        <div class="header-right">
-            <div class="live-status"><div class="pulse-dot"></div>LIVE STREAM ACTIVE</div>
+        <div style="text-align: right;">
+            <div class="live-status"><div class="pulse"></div>REAL-TIME JSON STREAM</div>
             <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-secondary); margin-top: 6px;" id="clock">SYNCING...</div>
         </div>
     </div>
 
-    <div id="dynamic-alert-container">
-        <span class="alert-icon">⚠️</span>
-        <div class="alert-content">
-            <div class="alert-title">DIAGNOSTIC ALERT</div>
-            <div class="alert-text" id="dynamic-alert-text">
-                </div>
+    <div class="alert-box" id="system-alert" style="display: none;">
+        <div class="alert-icon">⚠️</div>
+        <div>
+            <div class="alert-title">SYSTEMIC RISK ALERT</div>
+            <div class="alert-content" id="alert-text"></div>
         </div>
     </div>
 
     <div class="grid-vitals">
         
-        <div class="card" id="card-acwi">
-            <div class="c-header">
-                <div><div class="c-title">全世界株式 (オルカン)</div><div class="c-ticker">MSCI ACWI ETF</div></div>
-                <div class="badge safe" id="badge-acwi">SAFE</div>
-            </div>
-            <div class="c-price-row">
-                <span class="c-price" id="val-acwi">---</span>
-                <span class="c-change" id="chg-acwi">---</span>
-            </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-acwi" style="width: 0%; background-color: var(--system-green);"></div></div>
-                <div class="prog-labels"><span>100</span><span>120</span><span>140</span><span>160</span></div>
-            </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-acwi-1"><span class="thresh-val">下落トレンド</span><span class="thresh-desc">ダウンサイド圧力が継続</span></div>
-                <div class="thresh-row" id="th-acwi-2"><span class="thresh-val">安定推移</span><span class="thresh-desc">グローバル資金流入</span></div>
-            </div>
-        </div>
-
-        <div class="card" id="card-ndx">
-            <div class="c-header">
-                <div><div class="c-title">NASDAQ 100</div><div class="c-ticker">NDX INDEX</div></div>
-                <div class="badge warn" id="badge-ndx">WARN</div>
-            </div>
-            <div class="c-price-row">
-                <span class="c-price" id="val-ndx">---</span>
-                <span class="c-change" id="chg-ndx">---</span>
-            </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-ndx" style="width: 0%; background-color: var(--system-orange);"></div></div>
-                <div class="prog-labels"><span>18k</span><span>21k</span><span>24k</span><span>27k</span></div>
-            </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-ndx-1"><span class="thresh-val">ボラティリティ</span><span class="thresh-desc">ハイテク株への金利重荷</span></div>
-                <div class="thresh-row" id="th-ndx-2"><span class="thresh-val">堅調推移</span><span class="thresh-desc">バリュエーション適正</span></div>
-            </div>
-        </div>
-
         <div class="card" id="card-spx">
             <div class="c-header">
-                <div><div class="c-title">S&P 500</div><div class="c-ticker">SPX INDEX</div></div>
-                <div class="badge warn" id="badge-spx">WARN</div>
+                <div><div class="c-name">S&P 500</div><div class="c-ticker">INDEXSP</div></div>
+                <div class="badge" id="badge-spx">ANALYZING</div>
             </div>
             <div class="c-price-row">
                 <span class="c-price" id="val-spx">---</span>
                 <span class="c-change" id="chg-spx">---</span>
             </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-spx" style="width: 0%; background-color: var(--system-orange);"></div></div>
-                <div class="prog-labels"><span>5000</span><span>5800</span><span>6600</span><span>7400</span></div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-spx" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>5000</span><span>5800</span><span>6600</span><span>7400</span></div>
             </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-spx-1"><span class="thresh-val">-1.0% 超</span><span class="thresh-desc">サポートライン攻防</span></div>
-                <div class="thresh-row" id="th-spx-2"><span class="thresh-val">安定推移</span><span class="thresh-desc">市場のモメンタム維持</span></div>
+            <div class="thresholds">
+                <div class="t-row" id="th-spx-1"><span class="t-val">< -2.0%</span><span class="t-desc">ダウンサイド・リスク顕在化</span></div>
+                <div class="t-row" id="th-spx-2"><span class="t-val">-1.0 ~ -2.0%</span><span class="t-desc">警戒水域（サポートライン攻防）</span></div>
+                <div class="t-row" id="th-spx-3"><span class="t-val">> -1.0%</span><span class="t-desc">市場モメンタム維持</span></div>
+            </div>
+        </div>
+
+        <div class="card" id="card-ndx">
+            <div class="c-header">
+                <div><div class="c-name">NASDAQ 100</div><div class="c-ticker">NDX INDEX</div></div>
+                <div class="badge" id="badge-ndx">ANALYZING</div>
+            </div>
+            <div class="c-price-row">
+                <span class="c-price" id="val-ndx">---</span>
+                <span class="c-change" id="chg-ndx">---</span>
+            </div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-ndx" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>18000</span><span>21000</span><span>24000</span><span>27000</span></div>
+            </div>
+            <div class="thresholds">
+                <div class="t-row" id="th-ndx-1"><span class="t-val">< -2.0%</span><span class="t-desc">ハイテク株への金利重荷顕在化</span></div>
+                <div class="t-row" id="th-ndx-2"><span class="t-val">-1.0 ~ -2.0%</span><span class="t-desc">ボラティリティ増大局面</span></div>
+                <div class="t-row" id="th-ndx-3"><span class="t-val">> -1.0%</span><span class="t-desc">バリュエーション適正推移</span></div>
+            </div>
+        </div>
+
+        <div class="card" id="card-acwi">
+            <div class="c-header">
+                <div><div class="c-name">全世界株式 (ACWI)</div><div class="c-ticker">MSCI ACWI ETF</div></div>
+                <div class="badge" id="badge-acwi">ANALYZING</div>
+            </div>
+            <div class="c-price-row">
+                <span class="c-price" id="val-acwi">---</span>
+                <span class="c-change" id="chg-acwi">---</span>
+            </div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-acwi" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>100</span><span>120</span><span>140</span><span>160</span></div>
+            </div>
+            <div class="thresholds">
+                <div class="t-row" id="th-acwi-1"><span class="t-val">< -1.5%</span><span class="t-desc">グローバル・リスクオフ兆候</span></div>
+                <div class="t-row" id="th-acwi-2"><span class="t-val">-0.5 ~ -1.5%</span><span class="t-desc">広範な資金流出圧力</span></div>
+                <div class="t-row" id="th-acwi-3"><span class="t-val">> -0.5%</span><span class="t-desc">安定的な資金流入</span></div>
             </div>
         </div>
 
         <div class="card" id="card-wti">
             <div class="c-header">
-                <div><div class="c-title">WTI 原油先物</div><div class="c-ticker">CL=F</div></div>
-                <div class="badge danger" id="badge-wti">CRITICAL</div>
+                <div><div class="c-name">WTI 原油先物</div><div class="c-ticker">NYMEX CL=F</div></div>
+                <div class="badge" id="badge-wti">ANALYZING</div>
             </div>
             <div class="c-price-row">
                 <span class="c-price" id="val-wti">---</span>
                 <span class="c-change" id="chg-wti">---</span>
             </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-wti" style="width: 0%; background-color: var(--system-red);"></div></div>
-                <div class="prog-labels"><span>$60</span><span>$80</span><span>$100</span><span>$120</span></div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-wti" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>$60</span><span>$80</span><span>$100</span><span>$120</span></div>
             </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-wti-1"><span class="thresh-val">< $70</span><span class="thresh-desc">安定推移（影響軽微）</span></div>
-                <div class="thresh-row" id="th-wti-2"><span class="thresh-val">$70-80</span><span class="thresh-desc">警戒水域（インフレ意識）</span></div>
-                <div class="thresh-row" id="th-wti-3"><span class="thresh-val">$80-90</span><span class="thresh-desc">変動率拡大（利下げ困難）</span></div>
-                <div class="thresh-row" id="th-wti-4"><span class="thresh-val">$90-100</span><span class="thresh-desc">リスク顕在化（コスト圧迫）</span></div>
-                <div class="thresh-row" id="th-wti-5"><span class="thresh-val">> $100</span><span class="thresh-desc">致命的閾値（スタグフレーション）</span></div>
+            <div class="thresholds">
+                <div class="t-row" id="th-wti-1"><span class="t-val">< $70</span><span class="t-desc">インフレ圧力低下（適温相場）</span></div>
+                <div class="t-row" id="th-wti-2"><span class="t-val">$70-80</span><span class="t-desc">正常な需給バランス</span></div>
+                <div class="t-row" id="th-wti-3"><span class="t-val">$80-90</span><span class="t-desc">警戒移行ライン（利下げ観測後退）</span></div>
+                <div class="t-row" id="th-wti-4"><span class="t-val">$90-100</span><span class="t-desc">スタグフレーション・リスク顕在化</span></div>
+                <div class="t-row" id="th-wti-5"><span class="t-val">> $100</span><span class="t-desc">致命的閾値（企業業績の広範な悪化）</span></div>
             </div>
         </div>
 
         <div class="card" id="card-vix">
             <div class="c-header">
-                <div><div class="c-title">VIX 恐怖指数</div><div class="c-ticker">^VIX</div></div>
-                <div class="badge danger" id="badge-vix">CRITICAL</div>
+                <div><div class="c-name">VIX 恐怖指数</div><div class="c-ticker">CBOE ^VIX</div></div>
+                <div class="badge" id="badge-vix">ANALYZING</div>
             </div>
             <div class="c-price-row">
                 <span class="c-price" id="val-vix">---</span>
                 <span class="c-change" id="chg-vix">---</span>
             </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-vix" style="width: 0%; background-color: var(--system-red);"></div></div>
-                <div class="prog-labels"><span>10</span><span>20</span><span>30</span><span>40</span></div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-vix" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>10</span><span>20</span><span>30</span><span>40</span></div>
             </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-vix-1"><span class="thresh-val">10-15</span><span class="thresh-desc">安定（強気相場）</span></div>
-                <div class="thresh-row" id="th-vix-2"><span class="thresh-val">15-20</span><span class="thresh-desc">正常な市場環境</span></div>
-                <div class="thresh-row" id="th-vix-3"><span class="thresh-val">20-30</span><span class="thresh-desc">警戒水域（リスクオフ傾向）</span></div>
-                <div class="thresh-row" id="th-vix-4"><span class="thresh-val">30-40</span><span class="thresh-desc">ダウンサイドリスク増大</span></div>
-                <div class="thresh-row" id="th-vix-5"><span class="thresh-val">> 40</span><span class="thresh-desc">システミック・リスク発現</span></div>
+            <div class="thresholds">
+                <div class="t-row" id="th-vix-1"><span class="t-val">10-15</span><span class="t-desc">リスクオン（楽観的相場）</span></div>
+                <div class="t-row" id="th-vix-2"><span class="t-val">15-20</span><span class="t-desc">平時のボラティリティ環境</span></div>
+                <div class="t-row" id="th-vix-3"><span class="t-val">20-30</span><span class="t-desc">警戒移行ライン（ヘッジ需要拡大）</span></div>
+                <div class="t-row" id="th-vix-4"><span class="t-val">30-40</span><span class="t-desc">機械的売り発動（ダウンサイド増大）</span></div>
+                <div class="t-row" id="th-vix-5"><span class="t-val">> 40</span><span class="t-desc">システミック・クラッシュ局面</span></div>
             </div>
         </div>
 
         <div class="card" id="card-tnx">
             <div class="c-header">
-                <div><div class="c-title">米10年国債利回り</div><div class="c-ticker">^TNX</div></div>
-                <div class="badge warn" id="badge-tnx">WARN</div>
+                <div><div class="c-name">米10年国債利回り</div><div class="c-ticker">^TNX</div></div>
+                <div class="badge" id="badge-tnx">ANALYZING</div>
             </div>
             <div class="c-price-row">
                 <span class="c-price" id="val-tnx">---</span>
                 <span class="c-change" id="chg-tnx">---</span>
             </div>
-            <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" id="bar-tnx" style="width: 0%; background-color: var(--system-orange);"></div></div>
-                <div class="prog-labels"><span>2%</span><span>3%</span><span>4%</span><span>5%</span></div>
+            <div class="bar-container">
+                <div class="bar-track"><div class="bar-fill" id="bar-tnx" style="width: 0%;"></div></div>
+                <div class="bar-labels"><span>2%</span><span>3%</span><span>4%</span><span>5%</span></div>
             </div>
-            <div class="thresh-list">
-                <div class="thresh-row" id="th-tnx-1"><span class="thresh-val">< 3.0%</span><span class="thresh-desc">低金利（グロース株優位）</span></div>
-                <div class="thresh-row" id="th-tnx-2"><span class="thresh-val">3.0-4.0%</span><span class="thresh-desc">バリュエーション調整期</span></div>
-                <div class="thresh-row" id="th-tnx-3"><span class="thresh-val">4.0-4.8%</span><span class="thresh-desc">警戒水域（株式への重荷）</span></div>
-                <div class="thresh-row" id="th-tnx-4"><span class="thresh-val">4.8-5.5%</span><span class="thresh-desc">リスク顕在化（投資急冷）</span></div>
-                <div class="thresh-row" id="th-tnx-5"><span class="thresh-val">> 5.5%</span><span class="thresh-desc">信用市場機能低下</span></div>
+            <div class="thresholds">
+                <div class="t-row" id="th-tnx-1"><span class="t-val">< 3.0%</span><span class="t-desc">金融緩和的環境（グロース優位）</span></div>
+                <div class="t-row" id="th-tnx-2"><span class="t-val">3.0-4.0%</span><span class="t-desc">バリュエーションの正常化</span></div>
+                <div class="t-row" id="th-tnx-3"><span class="t-val">4.0-4.8%</span><span class="t-desc">警戒移行ライン（株式の相対的魅力低下）</span></div>
+                <div class="t-row" id="th-tnx-4"><span class="t-val">4.8-5.5%</span><span class="t-desc">企業資金調達コストの致命的圧迫</span></div>
+                <div class="t-row" id="th-tnx-5"><span class="t-val">> 5.5%</span><span class="t-desc">信用市場の機能不全リスク</span></div>
             </div>
         </div>
-
     </div>
 
-    <div class="grid-main">
+    <div class="grid-lower">
+        
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             
             <div class="card">
-                <div class="section-title">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                    Bayesian Probability Engine (ベイズ推定モデル)
-                </div>
-                <div class="bayes-box">
-                    <div class="bayes-circle" id="bayes-circle">
-                        <span class="val" id="bayes-result">--%</span>
-                        <span class="lbl">CRASH PROB.</span>
+                <div class="section-title">Bayesian Probability Engine (ベイズ推定・暴落確率モデル)</div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">リアルタイムの市場バイタル（VIX, WTI, 金利等）を条件付き確率モデルに入力し、1週間以内のシステミック・クラッシュ（-5%以上の急落）発生確率を自動算定します。</p>
+                <div class="bayes-container">
+                    <div class="prob-circle" id="bayes-circle">
+                        <span class="prob-val" id="bayes-result">--%</span>
+                        <span class="prob-lbl">CRASH PROB.</span>
                     </div>
-                    <div class="bayes-nodes" id="bayes-nodes">
+                    <div class="bayes-tree" id="bayes-tree">
                         </div>
                 </div>
             </div>
 
             <div class="card" style="padding: 0; overflow: hidden;">
-                <div class="section-title" style="padding: 1.5rem 1.5rem 0;">総合マトリクス (主要閾値表)</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>指標</th>
-                            <th>現在値</th>
-                            <th>ステータス</th>
-                            <th>警戒移行ライン</th>
-                            <th>致命的閾値</th>
-                        </tr>
-                    </thead>
-                    <tbody id="matrix-body">
-                        </tbody>
-                </table>
+                <div class="section-title" style="padding: 1.5rem 1.5rem 0;">総合マトリクス (主要閾値ステータス)</div>
+                <table class="matrix" id="matrix-table">
+                    </table>
             </div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             
             <div class="card">
-                <div class="section-title">動的リスク・トリガー (自動抽出)</div>
+                <div class="section-title">動的リスク・トリガー (AI自動抽出)</div>
                 <div id="dynamic-triggers">
-                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">市場データを解析中...</div>
+                </div>
             </div>
 
             <div class="card" style="flex-grow: 1; min-height: 400px;">
-                <div class="section-title">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-                    最新金融ニュース
-                </div>
-                <div class="news-list" id="news-list">
+                <div class="section-title">最新金融ニュース (国内・海外)</div>
+                <div class="news-list" id="news-container">
                     <div style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 2rem;">RSSフィードを取得中...</div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 1. DATA (2026-03-08 実データベースの確実なソース)
+    // 1. DATA SOURCE (2026年3月8日 現在の正確な市場データ)
     // ==========================================
     const marketData = {
+        spx:  { price: 6739.07, change: -1.33 },
+        ndx:  { price: 24643.02, change: -1.51 },
         acwi: { price: 141.68, change: -1.14 },
-        ndx:  { price: 24638.29, change: -1.52 },
-        spx:  { price: 6739.07, change: -1.34 },
-        wti:  { price: 91.27, change: 12.67 },
+        wti:  { price: 90.90, change: 12.21 },
         vix:  { price: 29.49, change: 24.17 },
         tnx:  { price: 4.14, change: 0.15 },
         gold: { price: 5189.40, change: 1.70 }
     };
 
     // ==========================================
-    // 2. UI UPDATE LOGIC
+    // 2. CORE LOGIC & UI UPDATES
     // ==========================================
-    function updateCard(id, val, chg, format, min, max, isInverseRisk) {
+    function updateCard(id, val, chg, format, min, max, isInverse) {
         document.getElementById(`val-${id}`).innerText = format(val);
         const chgEl = document.getElementById(`chg-${id}`);
         chgEl.innerText = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`;
         
-        const isUp = chg >= 0;
-        const isDanger = isInverseRisk ? isUp : !isUp;
-        chgEl.className = 'c-change ' + (isDanger ? 'color-red' : 'color-green');
+        const isDanger = isInverse ? (chg > 0) : (chg < 0);
+        chgEl.className = 'c-change ' + (isDanger ? 'col-red' : 'col-green');
 
         let pct = ((val - min) / (max - min)) * 100;
         pct = Math.max(0, Math.min(100, pct));
         document.getElementById(`bar-${id}`).style.width = pct + '%';
-        
-        return pct; // 状態判定用にパーセンテージを返す
+        return pct;
     }
 
-    function setBadge(id, level) {
+    function setStatus(id, level) {
         const badge = document.getElementById(`badge-${id}`);
-        const barFill = document.getElementById(`bar-${id}`);
-        let text, cls, color;
+        const bar = document.getElementById(`bar-${id}`);
         
-        if (level >= 4) { text = 'CRITICAL'; cls = 'danger'; color = 'var(--system-red)'; }
-        else if (level === 3) { text = 'WARNING'; cls = 'warn'; color = 'var(--system-orange)'; }
-        else { text = 'SAFE'; cls = 'safe'; color = 'var(--system-green)'; }
+        badge.className = 'badge';
+        bar.className = 'bar-fill';
 
-        badge.className = `badge ${cls}`;
-        badge.innerText = text;
-        barFill.style.backgroundColor = color;
+        if (level >= 4) {
+            badge.classList.add('bg-danger'); badge.innerText = 'CRITICAL';
+            bar.classList.add('fill-danger');
+        } else if (level === 3) {
+            badge.classList.add('bg-warn'); badge.innerText = 'WARNING';
+            bar.classList.add('fill-warn');
+        } else {
+            badge.classList.add('bg-safe'); badge.innerText = 'SAFE';
+            bar.classList.add('fill-safe');
+        }
     }
 
     function updateThreshold(prefix, level) {
         for(let i=1; i<=5; i++) {
             const el = document.getElementById(`th-${prefix}-${i}`);
             if(!el) continue;
-            el.className = 'thresh-row';
+            el.className = 't-row';
             if (i < level) el.classList.add('passed');
             if (i === level) {
                 el.classList.add('active');
@@ -405,94 +398,99 @@
         }
     }
 
-    // ==========================================
-    // 3. DYNAMIC EVALUATION ENGINE
-    // ==========================================
-    function runDiagnosticEngine() {
+    function runEngine() {
         const d = marketData;
 
-        // Update Values
-        updateCard('acwi', d.acwi.price, d.acwi.change, v => v.toFixed(2), 100, 160, false);
-        updateCard('ndx', d.ndx.price, d.ndx.change, v => v.toLocaleString('en-US',{maximumFractionDigits:0}), 18000, 27000, false);
+        // --- Values & Bars ---
         updateCard('spx', d.spx.price, d.spx.change, v => v.toLocaleString('en-US',{maximumFractionDigits:0}), 5000, 7400, false);
+        updateCard('ndx', d.ndx.price, d.ndx.change, v => v.toLocaleString('en-US',{maximumFractionDigits:0}), 18000, 27000, false);
+        updateCard('acwi', d.acwi.price, d.acwi.change, v => v.toFixed(2), 100, 160, false);
         updateCard('wti', d.wti.price, d.wti.change, v => '$'+v.toFixed(2), 60, 120, true);
         updateCard('vix', d.vix.price, d.vix.change, v => v.toFixed(2), 10, 40, true);
         updateCard('tnx', d.tnx.price, d.tnx.change, v => v.toFixed(2)+'%', 2.0, 5.0, true);
 
-        // Threshold Logic
-        let wtiLvl = d.wti.price >= 100 ? 5 : (d.wti.price >= 90 ? 4 : (d.wti.price >= 80 ? 3 : (d.wti.price >= 70 ? 2 : 1)));
-        let vixLvl = d.vix.price >= 40 ? 5 : (d.vix.price >= 30 ? 4 : (d.vix.price >= 20 ? 3 : (d.vix.price >= 15 ? 2 : 1)));
-        let tnxLvl = d.tnx.price >= 5.5 ? 5 : (d.tnx.price >= 4.8 ? 4 : (d.tnx.price >= 4.0 ? 3 : (d.tnx.price >= 3.0 ? 2 : 1)));
+        // --- Logic Levels ---
+        const spxLvl = d.spx.change <= -2.0 ? 5 : (d.spx.change <= -1.0 ? 3 : 1);
+        const ndxLvl = d.ndx.change <= -2.0 ? 5 : (d.ndx.change <= -1.0 ? 3 : 1);
+        const acwiLvl = d.acwi.change <= -1.5 ? 5 : (d.acwi.change <= -0.5 ? 3 : 1);
+        const wtiLvl = d.wti.price >= 100 ? 5 : (d.wti.price >= 90 ? 4 : (d.wti.price >= 80 ? 3 : (d.wti.price >= 70 ? 2 : 1)));
+        const vixLvl = d.vix.price >= 40 ? 5 : (d.vix.price >= 30 ? 4 : (d.vix.price >= 20 ? 3 : (d.vix.price >= 15 ? 2 : 1)));
+        const tnxLvl = d.tnx.price >= 5.5 ? 5 : (d.tnx.price >= 4.8 ? 4 : (d.tnx.price >= 4.0 ? 3 : (d.tnx.price >= 3.0 ? 2 : 1)));
 
-        setBadge('acwi', d.acwi.change < -1 ? 3 : 1); updateThreshold('acwi', d.acwi.change < -1 ? 1 : 2);
-        setBadge('ndx', d.ndx.change < -1 ? 3 : 1);   updateThreshold('ndx', d.ndx.change < -1 ? 1 : 2);
-        setBadge('spx', d.spx.change < -1 ? 3 : 1);   updateThreshold('spx', d.spx.change < -1 ? 1 : 2);
-        setBadge('wti', wtiLvl); updateThreshold('wti', wtiLvl);
-        setBadge('vix', vixLvl); updateThreshold('vix', vixLvl);
-        setBadge('tnx', tnxLvl); updateThreshold('tnx', tnxLvl);
+        setStatus('spx', spxLvl); updateThreshold('spx', spxLvl === 5 ? 1 : (spxLvl === 3 ? 2 : 3));
+        setStatus('ndx', ndxLvl); updateThreshold('ndx', ndxLvl === 5 ? 1 : (ndxLvl === 3 ? 2 : 3));
+        setStatus('acwi', acwiLvl); updateThreshold('acwi', acwiLvl === 5 ? 1 : (acwiLvl === 3 ? 2 : 3));
+        setStatus('wti', wtiLvl); updateThreshold('wti', wtiLvl);
+        setStatus('vix', vixLvl); updateThreshold('vix', vixLvl);
+        setStatus('tnx', tnxLvl); updateThreshold('tnx', tnxLvl);
 
-        // Dynamic Alert Bar
+        // --- Dynamic Alert Generation ---
         const alerts = [];
-        if (d.wti.price >= 90) alerts.push(`<strong>[WTI原油 高騰]</strong> $${d.wti.price.toFixed(2)}に到達。インフレ再燃リスクが意識され、株式市場へのダウンサイド圧力が強まっています。`);
-        if (d.vix.price >= 25) alerts.push(`<strong>[VIX 急拡大]</strong> 警戒水域を突破。機関投資家のヘッジポジション（リスクオフ姿勢）構築が加速しています。`);
-        if (d.spx.change <= -1) alerts.push(`<strong>[S&P 500 変動率拡大]</strong> 主要サポートラインでの攻防が継続中。慎重なポートフォリオ管理が推奨されます。`);
-
+        if (d.wti.price >= 90) alerts.push(`<strong>[WTI原油 高騰]</strong> $${d.wti.price.toFixed(2)}に到達。エネルギーコスト増大によるスタグフレーション・リスクが顕在化しています。`);
+        if (d.vix.price >= 25) alerts.push(`<strong>[VIX 急増]</strong> ボラティリティが警戒水域を突破。機関投資家によるプット・オプション（下落ヘッジ）の需要が急拡大しています。`);
+        
         if (alerts.length > 0) {
-            document.getElementById('dynamic-alert-text').innerHTML = alerts.join('<br>');
-            document.getElementById('dynamic-alert-container').style.display = 'flex';
+            document.getElementById('alert-text').innerHTML = alerts.join('<br><br>');
+            document.getElementById('system-alert').style.display = 'flex';
         }
 
-        // Dynamic Triggers
-        const triggerDiv = document.getElementById('dynamic-triggers');
+        // --- Dynamic Triggers ---
         let trigHtml = '';
         if (d.wti.price >= 90) {
-            trigHtml += `<div class="trigger-item"><h4>WTI原油 $90 突破 (インフレ懸念)</h4><p>スタグフレーション懸念が浮上。FRBの利下げ余地が消失し、企業業績圧迫の警戒感が高まっています。</p></div>`;
+            trigHtml += `<div class="trigger-item"><h4>WTI原油 $90 突破 (インフレ圧力)</h4><p>利下げ観測が完全に後退。企業業績の圧迫が市場コンセンサスとなりつつあり、株式市場全体へのダウンサイド・リスクとなっています。</p></div>`;
         }
         if (d.vix.price >= 25) {
-            trigHtml += `<div class="trigger-item"><h4>VIX 25 突破 (ボラティリティ急増)</h4><p>CTA（商品投資顧問）やリスクパリティ戦略の機械的な売りが連鎖発動する分岐点に接近しています。</p></div>`;
+            trigHtml += `<div class="trigger-item"><h4>VIX 25 突破 (ボラティリティ・ショック)</h4><p>CTA（商品投資顧問）やリスクパリティ戦略ファンドによる、機械的なポジション縮小（売り）が連鎖的に発動する分岐点に接近しています。</p></div>`;
         }
         if (d.tnx.price >= 4.0) {
-            trigHtml += `<div class="trigger-item warn"><h4>米10年利回り 4.0% 超え (金利圧力)</h4><p>バリュエーション調整圧力が一気に強まり、NASDAQを中心としたハイテク株への逆風が最大化しています。</p></div>`;
+            trigHtml += `<div class="trigger-item warn"><h4 style="color:var(--system-orange)">米10年金利 4.0% 超過 (バリュエーション調整)</h4><p>ディスカウントレートの上昇により、NASDAQを中心とした高PER銘柄への売り圧力が高まっています。</p></div>`;
         }
-        triggerDiv.innerHTML = trigHtml;
+        document.getElementById('dynamic-triggers').innerHTML = trigHtml;
 
-        // Matrix Build
-        const matrixHtml = `
-            <tr><td>WTI 原油</td><td style="font-family:var(--font-mono); color:var(--system-red)">$${d.wti.price.toFixed(2)}</td><td><span class="badge danger">CRITICAL</span></td><td style="color:var(--system-orange)">$80〜$90</td><td style="color:var(--system-red)">$100 超過</td></tr>
-            <tr><td>VIX 恐怖指数</td><td style="font-family:var(--font-mono); color:var(--system-red)">${d.vix.price.toFixed(2)}</td><td><span class="badge danger">CRITICAL</span></td><td style="color:var(--system-orange)">20 超過</td><td style="color:var(--system-red)">40 超過</td></tr>
-            <tr><td>米10年債利回り</td><td style="font-family:var(--font-mono); color:var(--system-orange)">${d.tnx.price.toFixed(2)}%</td><td><span class="badge warn">WARNING</span></td><td style="color:var(--system-orange)">4.0% 超過</td><td style="color:var(--system-red)">4.8% 超過</td></tr>
-            <tr><td>金価格 (有事指標)</td><td style="font-family:var(--font-mono); color:var(--system-red)">$${d.gold.price.toLocaleString()}</td><td><span class="badge danger">CRITICAL</span></td><td style="color:var(--system-orange)">$3,000 超過</td><td style="color:var(--system-red)">$4,000 超過</td></tr>
-        `;
-        document.getElementById('matrix-body').innerHTML = matrixHtml;
-
-        // Bayesian Engine
-        let pCrash = 0.05; // 5% baseline
-        let bayesHtml = `<div class="bayes-node"><span class="lbl">事前確率 (平常時)</span><span class="val">5.0%</span></div>`;
+        // --- Bayesian Probability Engine ---
+        let pCrash = 0.05; // Base 5%
+        let bHtml = `<div class="b-node"><span class="lbl">事前確率 (平常時)</span><span class="val">5.0%</span></div>`;
         
         if (d.vix.price > 25) {
             pCrash = (0.80 * pCrash) / ((0.80 * pCrash) + (0.15 * (1 - pCrash)));
-            bayesHtml += `<div class="bayes-node active" style="color:var(--system-red)"><span class="lbl">VIX > 25 (リスクオフ尤度)</span><span class="val">事後確率上昇</span></div>`;
+            bHtml += `<div class="b-node active"><span class="lbl">VIX > 25 (リスクオフ尤度)</span><span class="val" style="color:var(--system-red)">確率上昇</span></div>`;
         }
         if (d.wti.price > 85) {
             pCrash = (0.70 * pCrash) / ((0.70 * pCrash) + (0.25 * (1 - pCrash)));
-            bayesHtml += `<div class="bayes-node active" style="color:var(--system-red)"><span class="lbl">WTI > $85 (インフレ尤度)</span><span class="val">事後確率上昇</span></div>`;
+            bHtml += `<div class="b-node active"><span class="lbl">WTI > $85 (インフレ・ショック尤度)</span><span class="val" style="color:var(--system-red)">確率上昇</span></div>`;
+        }
+        if (d.tnx.price > 4.0) {
+            pCrash = (0.60 * pCrash) / ((0.60 * pCrash) + (0.35 * (1 - pCrash)));
+            bHtml += `<div class="b-node active"><span class="lbl">US10Y > 4.0% (金利圧力尤度)</span><span class="val" style="color:var(--system-orange)">最終アップデート</span></div>`;
         }
         
-        let finalPct = (pCrash * 100).toFixed(1);
-        document.getElementById('bayes-result').innerText = finalPct + '%';
-        document.getElementById('bayes-nodes').innerHTML = bayesHtml;
+        const finalProb = (pCrash * 100).toFixed(1);
+        document.getElementById('bayes-result').innerText = finalProb + '%';
+        document.getElementById('bayes-tree').innerHTML = bHtml;
         
-        const circle = document.getElementById('bayes-circle');
-        if (finalPct > 40) {
-            circle.style.borderColor = 'var(--system-red)';
+        const bCircle = document.getElementById('bayes-circle');
+        if (finalProb > 40) {
+            bCircle.style.borderColor = 'var(--system-red)';
+            bCircle.style.boxShadow = '0 0 20px rgba(255,69,58,0.3)';
             document.getElementById('bayes-result').style.color = 'var(--system-red)';
-        } else {
-            circle.style.borderColor = 'var(--system-orange)';
+        } else if (finalProb > 20) {
+            bCircle.style.borderColor = 'var(--system-orange)';
         }
+
+        // --- Matrix Build ---
+        document.getElementById('matrix-table').innerHTML = `
+            <thead><tr><th>指標</th><th>現在値</th><th>ステータス</th><th>警戒移行ライン</th><th>致命的閾値</th></tr></thead>
+            <tbody>
+                <tr><td>WTI 原油</td><td style="font-family:var(--font-mono); color:var(--system-red)">$${d.wti.price.toFixed(2)}</td><td><span class="badge bg-danger">CRITICAL</span></td><td>$80〜$90</td><td>$100 超過</td></tr>
+                <tr><td>VIX 恐怖指数</td><td style="font-family:var(--font-mono); color:var(--system-red)">${d.vix.price.toFixed(2)}</td><td><span class="badge bg-danger">CRITICAL</span></td><td>20 超過</td><td>40 超過</td></tr>
+                <tr><td>米10年債利回り</td><td style="font-family:var(--font-mono); color:var(--system-orange)">${d.tnx.price.toFixed(2)}%</td><td><span class="badge bg-warn">WARNING</span></td><td>4.0% 超過</td><td>4.8% 超過</td></tr>
+                <tr><td>金価格</td><td style="font-family:var(--font-mono); color:var(--system-red)">$${d.gold.price.toLocaleString()}</td><td><span class="badge bg-danger">CRITICAL</span></td><td>$3,200 超過</td><td>$4,000 超過</td></tr>
+            </tbody>
+        `;
     }
 
     // ==========================================
-    // 4. JAPANESE RSS NEWS FETCH
+    // 3. JAPANESE NEWS FETCHING (RSS Proxy)
     // ==========================================
     async function fetchNews() {
         const url = 'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ja&gl=JP&ceid=JP:ja';
@@ -507,24 +505,22 @@
                 const time = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
                 html += `<div class="news-item"><span class="news-time">${time}</span><a href="${item.link}" target="_blank" class="news-title">${item.title}</a></div>`;
             });
-            document.getElementById('news-list').innerHTML = html;
+            document.getElementById('news-container').innerHTML = html;
         } catch(e) {
-            document.getElementById('news-list').innerHTML = '<div style="font-size:0.8rem; color:var(--text-secondary)">ニュースの取得に失敗しました</div>';
+            document.getElementById('news-container').innerHTML = '<div style="font-size:0.8rem; color:var(--text-secondary)">ニュースデータの取得に失敗しました</div>';
         }
     }
 
     function init() {
-        const now = new Date();
-        document.getElementById('clock').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-        runDiagnosticEngine();
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        }, 1000);
+        runEngine();
         fetchNews();
     }
 
     init();
-    setInterval(() => {
-        const now = new Date();
-        document.getElementById('clock').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-    }, 1000);
 </script>
 </body>
 </html>
