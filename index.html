@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>TERMINAL - MARKET SURVEILLANCE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #030303; color: #a0aab5; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 0; }
+        .panel { background-color: #0a0a0a; border: 1px solid #1f1f1f; }
+        .critical-text { color: #ff2a2a; text-shadow: 0 0 10px rgba(255,42,42,0.3); }
+        .safe-text { color: #cfcfcf; }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[#1f1f1f] pb-6 mb-10">
+        <div>
+            <h1 class="text-xl tracking-[0.2em] text-[#e0e0e0] uppercase font-light">Market Vital Surveillance</h1>
+            <p class="text-[10px] text-[#555] mt-2 uppercase">Real-time JSON Stream / Active</p>
+        </div>
+        <div class="mt-4 md:mt-0 text-left md:text-right">
+            <p class="text-[10px] text-[#555] uppercase tracking-wider">Estimated Crash Window</p>
+            <p class="critical-text text-base mt-1">MAR 12 - MAR 15, 2026</p>
+        </div>
+    </header>
+
+    <div class="panel p-8 md:p-12 mb-10 border-l-2 border-[#ff2a2a]">
+        <p class="text-[10px] text-[#555] uppercase tracking-widest mb-4">Systemic Fragility Index</p>
+        <div id="risk-score" class="text-6xl md:text-8xl font-light critical-text">--.-%</div>
+    </div>
+
+    <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+    <script>
+        // ▼ ここをあなたのCSV URLに書き換えてください ▼
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTT0RojfNIg7FG42Fpwkr0uptIJfLXXH-oMC14Zd4v0b-e6AUoHg5CZDCo6_L70tNnuM4d_rBx11rII/pub?gid=0&single=true&output=csv';
+        // ▲ ここまで ▲
+
+        async function fetchData() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const rows = text.split('\n').slice(1);
+                
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                let totalRisk = 0;
+
+                rows.forEach(row => {
+                    const columns = row.split(',');
+                    if (columns.length < 6) return;
+                    
+                    const [name, value, change, status, threshold, score] = columns;
+                    totalRisk += parseFloat(score) || 0;
+                    const isCritical = status.trim() === 'CRITICAL';
+
+                    grid.innerHTML += `
+                        <div class="panel p-6 flex flex-col justify-between h-40">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] text-[#666] uppercase tracking-wider">${name}</span>
+                                <span class="text-[9px] px-1.5 py-0.5 border ${isCritical ? 'border-[#4a0000] text-[#ff2a2a]' : 'border-[#222] text-[#666]'}">${status}</span>
+                            </div>
+                            <div class="text-3xl font-light mt-4 ${isCritical ? 'critical-text' : 'safe-text'}">
+                                ${parseFloat(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </div>
+                            <div class="text-[10px] mt-3 ${change.includes('-') ? 'text-[#ff4444]' : 'text-[#44ff44]'}">
+                                ${change} <span class="text-[#444] ml-2">TH: ${threshold}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const riskPercentage = Math.min((totalRisk / rows.length) * 100, 100).toFixed(1);
+                document.getElementById('risk-score').innerText = riskPercentage + '%';
+            } catch (error) {
+                console.error("Data synchronization failed.", error);
+            }
+        }
+
+        setInterval(fetchData, 60000);
+        fetchData();
+    </script>
+</body>
+</html>
